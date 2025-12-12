@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../utils/supabaseClient';
+import { mockEvents, uuidv4 } from '../../utils/mockDatabase';
 
 const ManageEvents = () => {
   const [events, setEvents] = useState([]);
@@ -13,7 +13,6 @@ const ManageEvents = () => {
     time: '',
     location: '',
     total_seats: '',
-    price: '',
   });
 
   useEffect(() => {
@@ -21,14 +20,12 @@ const ManageEvents = () => {
   }, []);
 
   const fetchEvents = async () => {
+    // MOCK: Simulate fetching from database
     try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .order('date', { ascending: true });
-
-      if (error) throw error;
-      setEvents(data || []);
+      await new Promise(resolve => setTimeout(resolve, 300));
+      // Sort and set a deep copy of mockEvents
+      const sortedEvents = [...mockEvents].sort((a, b) => new Date(a.date) - new Date(b.date));
+      setEvents(sortedEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -43,20 +40,39 @@ const ManageEvents = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // MOCK: Simulate database operation
     try {
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const newEventData = {
+        ...formData,
+        total_seats: parseInt(formData.total_seats),
+      };
+
       if (editingEvent) {
-        const { error } = await supabase
-          .from('events')
-          .update(formData)
-          .eq('id', editingEvent.id);
+        // MOCK UPDATE
+        const index = mockEvents.findIndex(event => event.id === editingEvent.id);
+        if (index !== -1) {
+          // Preserve remaining available_seats calculation
+          const seatsReserved = editingEvent.total_seats - editingEvent.available_seats;
+          const availableSeats = newEventData.total_seats - seatsReserved;
 
-        if (error) throw error;
+          mockEvents[index] = {
+            ...mockEvents[index],
+            ...newEventData,
+            available_seats: Math.max(0, availableSeats) // Prevent negative seats
+          };
+        }
       } else {
-        const { error } = await supabase
-          .from('events')
-          .insert([{ ...formData, available_seats: formData.total_seats }]);
-
-        if (error) throw error;
+        // MOCK INSERT
+        const newEvent = {
+          ...newEventData,
+          id: uuidv4(),
+          available_seats: newEventData.total_seats,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        mockEvents.push(newEvent);
       }
 
       resetForm();
@@ -69,14 +85,14 @@ const ManageEvents = () => {
 
   const handleEdit = (event) => {
     setEditingEvent(event);
+    // Convert numbers back to string for input fields
     setFormData({
       name: event.name,
       description: event.description,
       date: event.date,
       time: event.time,
       location: event.location,
-      total_seats: event.total_seats,
-      price: event.price,
+      total_seats: event.total_seats.toString(),
     });
     setShowForm(true);
   };
@@ -84,10 +100,19 @@ const ManageEvents = () => {
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this event?')) return;
 
+    // MOCK: Simulate database delete
     try {
-      const { error } = await supabase.from('events').delete().eq('id', id);
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      if (error) throw error;
+      // Use the global mockEvents for update
+      const initialLength = mockEvents.length;
+      let newMockEvents = mockEvents.filter(event => event.id !== id);
+      mockEvents.splice(0, mockEvents.length, ...newMockEvents); // Update global mock
+
+      if (mockEvents.length === initialLength) {
+          throw new Error('Event not found for deletion.');
+      }
+
       fetchEvents();
     } catch (error) {
       console.error('Error deleting event:', error);
@@ -103,7 +128,6 @@ const ManageEvents = () => {
       time: '',
       location: '',
       total_seats: '',
-      price: '',
     });
     setEditingEvent(null);
     setShowForm(false);
@@ -207,22 +231,6 @@ const ManageEvents = () => {
                   className="input-field"
                   required
                   min="1"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Price
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  className="input-field"
-                  required
-                  min="0"
-                  step="0.01"
                 />
               </div>
 

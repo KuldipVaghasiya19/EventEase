@@ -1,51 +1,27 @@
 import { useEffect, useState } from 'react';
+import { downloadTicketPdf } from '../../utils/pdfTicketGenerator';
 
 const BookingSuccessModal = ({ booking, event, onClose }) => {
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDownloading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
+    return () => {};
   }, []);
 
-  const handleDownloadTicket = () => {
+  const handleDownloadTicket = async () => {
     setDownloading(true);
 
-    const ticketContent = `
-      ╔════════════════════════════════════╗
-      ║      EVENT TICKET - CONFIRMED      ║
-      ╚════════════════════════════════════╝
-
-      Booking ID: ${booking.id}
-      Event: ${event.name}
-      Date: ${new Date(event.date).toLocaleDateString()}
-      Time: ${event.time}
-      Location: ${event.location}
-      Seats Booked: ${booking.seats_booked}
-      Total Price: $${booking.total_price}
-      Booking Date: ${new Date(booking.booking_date).toLocaleString()}
-
-      ╔════════════════════════════════════╗
-      ║   Thank you for your booking!      ║
-      ╚════════════════════════════════════╝
-    `;
-
-    const blob = new Blob([ticketContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ticket-${booking.id}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
-    setTimeout(() => {
-      setDownloading(false);
-    }, 2000);
+    try {
+        await downloadTicketPdf(booking, event);
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Failed to generate PDF ticket. Make sure jspdf and html2canvas are installed.');
+    } finally {
+        // Use a timeout to ensure the loading state is visible for a minimum duration
+        setTimeout(() => {
+            setDownloading(false);
+        }, 1000); 
+    }
   };
 
   return (
@@ -91,8 +67,8 @@ const BookingSuccessModal = ({ booking, event, onClose }) => {
                 <span>{booking.seats_booked}</span>
               </div>
               <div className="flex justify-between border-t border-gray-300 pt-2 mt-2">
-                <span className="font-bold text-gray-800">Total Paid:</span>
-                <span className="font-bold text-primary-600">${booking.total_price}</span>
+                <span className="font-bold text-gray-800">Status:</span>
+                <span className="font-bold text-primary-600">Confirmed</span>
               </div>
             </div>
           </div>
@@ -123,7 +99,7 @@ const BookingSuccessModal = ({ booking, event, onClose }) => {
                       d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                     />
                   </svg>
-                  Download Ticket
+                  Download Ticket (PDF)
                 </>
               )}
             </button>

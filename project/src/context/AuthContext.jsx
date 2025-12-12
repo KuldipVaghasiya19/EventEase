@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import { supabase } from '../utils/supabaseClient';
+import { mockUsers } from '../utils/mockDatabase'; // IMPORTED FOR MOCK AUTH
 
 const AuthContext = createContext({});
 
@@ -16,117 +16,66 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(null);
 
+  // MOCK PERSISTENCE: Simulate an already logged-in user using sessionStorage
   useEffect(() => {
-    checkUser();
+    const storedUser = sessionStorage.getItem('mockUser');
+    const storedRole = sessionStorage.getItem('mockUserRole');
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        (() => {
-          if (session?.user) {
-            setUser(session.user);
-            fetchUserRole(session.user.id);
-          } else {
-            setUser(null);
-            setUserRole(null);
-          }
-        })();
-      }
-    );
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
+    if (storedUser && storedRole) {
+      setUser(JSON.parse(storedUser));
+      setUserRole(storedRole);
+    }
+    setLoading(false);
   }, []);
 
-  const checkUser = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        setUser(session.user);
-        await fetchUserRole(session.user.id);
-      }
-    } catch (error) {
-      console.error('Error checking user:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchUserRole = async (userId) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data) {
-        setUserRole(data.role);
-      }
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-    }
-  };
-
+  // MOCK SIGN UP
   const signUp = async (email, password, username, role = 'user') => {
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([
-            {
-              id: authData.user.id,
-              email: email,
-              username: username,
-              role: role,
-            },
-          ]);
-
-        if (profileError) throw profileError;
-      }
-
-      return { data: authData, error: null };
-    } catch (error) {
-      return { data: null, error };
-    }
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            if (mockUsers.some(u => u.email === email)) {
+                // Mock Error: Simulate existing user check
+                resolve({ data: null, error: { message: 'User with this email already exists (Mock Error)' } });
+            } else {
+                // Mock Success: Simulate new user creation and immediate login
+                const newUser = { id: `u_${username}_${Date.now()}`, email, username, role, password };
+                // NOTE: In a real mock app, you would add this to mockUsers, but for simplicity, we mock the sign-up process.
+                sessionStorage.setItem('mockUser', JSON.stringify(newUser));
+                sessionStorage.setItem('mockUserRole', role);
+                setUser(newUser);
+                setUserRole(role);
+                resolve({ data: { user: newUser }, error: null });
+            }
+        }, 500); // Simulate network delay
+    });
   };
 
+  // MOCK SIGN IN
   const signIn = async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            // Find user in mock data
+            const foundUser = mockUsers.find(u => u.email === email && u.password === password);
 
-      if (error) throw error;
-
-      if (data.user) {
-        await fetchUserRole(data.user.id);
-      }
-
-      return { data, error: null };
-    } catch (error) {
-      return { data: null, error };
-    }
+            if (foundUser) {
+                sessionStorage.setItem('mockUser', JSON.stringify(foundUser));
+                sessionStorage.setItem('mockUserRole', foundUser.role);
+                setUser(foundUser);
+                setUserRole(foundUser.role);
+                resolve({ data: { user: foundUser }, error: null });
+            } else {
+                // Mock Error: Invalid credentials
+                resolve({ data: null, error: { message: 'Invalid credentials (Mock Error). Try admin@mock.com/password or user@mock.com/password.' } });
+            }
+        }, 500); // Simulate network delay
+    });
   };
 
+  // MOCK SIGN OUT
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      setUser(null);
-      setUserRole(null);
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    sessionStorage.removeItem('mockUser');
+    sessionStorage.removeItem('mockUserRole');
+    setUser(null);
+    setUserRole(null);
   };
 
   const value = {

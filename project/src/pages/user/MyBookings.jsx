@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../utils/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
+import { mockBookings, mockEvents } from '../../utils/mockDatabase';
+import { downloadTicketPdf } from '../../utils/pdfTicketGenerator';
 
 const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
@@ -14,18 +15,15 @@ const MyBookings = () => {
   }, [user]);
 
   const fetchBookings = async () => {
+    // MOCK: Simulate fetching user's bookings and joining event data
     try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          events (*)
-        `)
-        .eq('user_id', user.id)
-        .order('booking_date', { ascending: false });
+        await new Promise(resolve => setTimeout(resolve, 300));
+        // Filter bookings by current mock user's ID
+        const userBookings = mockBookings
+            .filter(booking => booking.user_id === user.id)
+            .sort((a, b) => new Date(b.booking_date) - new Date(a.booking_date));
 
-      if (error) throw error;
-      setBookings(data || []);
+        setBookings(userBookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
     } finally {
@@ -36,64 +34,41 @@ const MyBookings = () => {
   const handleCancelBooking = async (bookingId, eventId, seatsBooked) => {
     if (!confirm('Are you sure you want to cancel this booking?')) return;
 
+    // MOCK: Simulate database transaction for cancellation
     try {
-      const { error: deleteError } = await supabase
-        .from('bookings')
-        .delete()
-        .eq('id', bookingId);
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-      if (deleteError) throw deleteError;
+        // 1. MOCK DELETE BOOKING
+        const initialLength = mockBookings.length;
+        let newMockBookings = mockBookings.filter(b => b.id !== bookingId);
+        mockBookings.splice(0, mockBookings.length, ...newMockBookings); // Update global mock
 
-      const { data: eventData } = await supabase
-        .from('events')
-        .select('available_seats')
-        .eq('id', eventId)
-        .single();
+        if (mockBookings.length === initialLength) {
+            throw new Error('Mock Booking not found for deletion.');
+        }
 
-      const { error: updateError } = await supabase
-        .from('events')
-        .update({ available_seats: eventData.available_seats + seatsBooked })
-        .eq('id', eventId);
+        // 2. MOCK UPDATE EVENT
+        const eventIndex = mockEvents.findIndex(e => e.id === eventId);
+        if (eventIndex !== -1) {
+            mockEvents[eventIndex].available_seats += seatsBooked;
+        }
 
-      if (updateError) throw updateError;
-
-      fetchBookings();
-      alert('Booking cancelled successfully!');
+        fetchBookings();
+        alert('Booking cancelled successfully!');
     } catch (error) {
       console.error('Error cancelling booking:', error);
       alert('Error cancelling booking. Please try again.');
     }
   };
 
-  const handleDownloadTicket = (booking) => {
-    const ticketContent = `
-      ╔════════════════════════════════════╗
-      ║      EVENT TICKET - CONFIRMED      ║
-      ╚════════════════════════════════════╝
-
-      Booking ID: ${booking.id}
-      Event: ${booking.events.name}
-      Date: ${new Date(booking.events.date).toLocaleDateString()}
-      Time: ${booking.events.time}
-      Location: ${booking.events.location}
-      Seats Booked: ${booking.seats_booked}
-      Total Price: $${booking.total_price}
-      Booking Date: ${new Date(booking.booking_date).toLocaleString()}
-
-      ╔════════════════════════════════════╗
-      ║   Thank you for your booking!      ║
-      ╚════════════════════════════════════╝
-    `;
-
-    const blob = new Blob([ticketContent], { type: 'text/plain' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `ticket-${booking.id}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+  // UPDATED FUNCTION: Uses the PDF generator utility
+  const handleDownloadTicket = async (booking) => {
+    try {
+        await downloadTicketPdf(booking, booking.events);
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Failed to generate PDF ticket. Make sure jspdf and html2canvas are installed.');
+    }
   };
 
   if (loading) {
@@ -170,8 +145,8 @@ const MyBookings = () => {
                         <p className="font-semibold text-gray-800">{booking.seats_booked}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Total Paid</p>
-                        <p className="font-semibold text-primary-600">${booking.total_price}</p>
+                        <p className="text-sm text-gray-500">Booking Status</p>
+                        <p className="font-semibold text-primary-600">Confirmed (FREE)</p>
                       </div>
                     </div>
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../../utils/supabaseClient';
+// import { supabase } from '../../utils/supabaseClient'; // REMOVED
+import { mockEvents, mockBookings, mockUsers } from '../../utils/mockDatabase'; // IMPORTED
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -15,24 +16,20 @@ const AdminDashboard = () => {
   }, []);
 
   const fetchStats = async () => {
+    // MOCK DATA FETCHING
     try {
-      const { count: eventsCount } = await supabase
-        .from('events')
-        .select('*', { count: 'exact', head: true });
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      const { count: bookingsCount } = await supabase
-        .from('bookings')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: usersCount } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('role', 'user');
+      const totalEvents = mockEvents.length;
+      const totalBookings = mockBookings.length;
+      // Filter only 'user' roles, excluding admin
+      const totalUsers = mockUsers.filter(u => u.role === 'user').length;
 
       setStats({
-        totalEvents: eventsCount || 0,
-        totalBookings: bookingsCount || 0,
-        totalUsers: usersCount || 0,
+        totalEvents: totalEvents,
+        totalBookings: totalBookings,
+        totalUsers: totalUsers,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);

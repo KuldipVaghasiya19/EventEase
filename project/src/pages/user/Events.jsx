@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../utils/supabaseClient';
+import { mockEvents } from '../../utils/mockDatabase';
 import { useAuth } from '../../context/AuthContext';
 import BookingModal from '../../components/user/BookingModal';
 import BookingSuccessModal from '../../components/user/BookingSuccessModal';
@@ -17,15 +17,16 @@ const Events = () => {
   }, []);
 
   const fetchEvents = async () => {
+    // MOCK: Simulate fetching and filtering only upcoming events
     try {
-      const { data, error } = await supabase
-        .from('events')
-        .select('*')
-        .gte('date', new Date().toISOString().split('T')[0])
-        .order('date', { ascending: true });
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      if (error) throw error;
-      setEvents(data || []);
+      const today = new Date().toISOString().split('T')[0];
+      const upcomingEvents = mockEvents
+        .filter(event => event.date >= today)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      setEvents(upcomingEvents);
     } catch (error) {
       console.error('Error fetching events:', error);
     } finally {
@@ -44,7 +45,9 @@ const Events = () => {
 
   const handleBookingSuccess = (booking) => {
     setShowBookingModal(false);
-    setBookingSuccess({ booking, event: selectedEvent });
+    // Find the latest state of the event in mockEvents for the success modal
+    const updatedEvent = mockEvents.find(e => e.id === booking.event_id);
+    setBookingSuccess({ booking, event: updatedEvent });
     fetchEvents();
   };
 
@@ -108,13 +111,12 @@ const Events = () => {
                         <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                       </svg>
                       <span>{event.available_seats} seats available</span>
-                    </div>
+                    </div >
                   </div>
 
                   <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                    <div>
-                      <p className="text-sm text-gray-500">Price</p>
-                      <p className="text-2xl font-bold text-primary-600">${event.price}</p>
+                    <div className="text-xl font-bold text-gray-800">
+                        FREE Event
                     </div>
                     <button
                       onClick={() => handleBookNow(event)}
@@ -138,7 +140,7 @@ const Events = () => {
       {showBookingModal && selectedEvent && (
         <BookingModal
           event={selectedEvent}
-          onClose={() => setShowBookingModal(false)}
+          onClose={() => setSelectedEvent(null) || setShowBookingModal(false)}
           onSuccess={handleBookingSuccess}
         />
       )}

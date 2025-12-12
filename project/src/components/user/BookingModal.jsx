@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { supabase } from '../../utils/supabaseClient';
 import { useAuth } from '../../context/AuthContext';
+import { mockBookings, mockEvents, uuidv4 } from '../../utils/mockDatabase';
 
 const BookingModal = ({ event, onClose, onSuccess }) => {
   const [seats, setSeats] = useState(1);
@@ -11,35 +11,45 @@ const BookingModal = ({ event, onClose, onSuccess }) => {
     e.preventDefault();
     setLoading(true);
 
+    // MOCK: Simulate database transaction
     try {
-      if (seats > event.available_seats) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const eventIndex = mockEvents.findIndex(e => e.id === event.id);
+
+      if (eventIndex === -1) {
+          throw new Error('Mock Event not found.');
+      }
+
+      const currentEvent = mockEvents[eventIndex];
+
+      if (seats > currentEvent.available_seats) {
         alert('Not enough seats available!');
         return;
       }
 
-      const { data, error } = await supabase
-        .from('bookings')
-        .insert([
-          {
-            user_id: user.id,
-            event_id: event.id,
-            seats_booked: seats,
-            total_price: seats * event.price,
-            booking_date: new Date().toISOString(),
-          },
-        ])
-        .select();
+      // 1. MOCK INSERT BOOKING
+      const newBooking = {
+          id: uuidv4(),
+          user_id: user.id,
+          event_id: currentEvent.id,
+          seats_booked: seats,
+          booking_date: new Date().toISOString(),
+          events: { // Denormalized data to mimic the database join for MyBookings.jsx
+            id: currentEvent.id,
+            name: currentEvent.name,
+            date: currentEvent.date,
+            time: currentEvent.time,
+            location: currentEvent.location,
+          }
+      };
+      mockBookings.push(newBooking);
 
-      if (error) throw error;
+      // 2. MOCK UPDATE EVENT
+      currentEvent.available_seats -= seats;
+      
+      onSuccess(newBooking);
 
-      const { error: updateError } = await supabase
-        .from('events')
-        .update({ available_seats: event.available_seats - seats })
-        .eq('id', event.id);
-
-      if (updateError) throw updateError;
-
-      onSuccess(data[0]);
     } catch (error) {
       console.error('Error creating booking:', error);
       alert('Error creating booking. Please try again.');
@@ -67,7 +77,6 @@ const BookingModal = ({ event, onClose, onSuccess }) => {
             <p>Date: {new Date(event.date).toLocaleDateString()}</p>
             <p>Time: {event.time}</p>
             <p>Location: {event.location}</p>
-            <p>Price per seat: ${event.price}</p>
             <p className="font-semibold text-primary-600">
               Available Seats: {event.available_seats}
             </p>
@@ -90,13 +99,10 @@ const BookingModal = ({ event, onClose, onSuccess }) => {
             />
           </div>
 
-          <div className="bg-primary-50 rounded-lg p-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-700 font-semibold">Total Amount:</span>
-              <span className="text-2xl font-bold text-primary-600">
-                ${(seats * event.price).toFixed(2)}
-              </span>
-            </div>
+          <div className="bg-primary-50 rounded-lg p-4 text-center">
+            <span className="text-lg font-semibold text-primary-700">
+              Your booking is FREE!
+            </span>
           </div>
 
           <div className="flex gap-4">
