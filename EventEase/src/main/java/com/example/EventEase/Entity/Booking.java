@@ -1,5 +1,6 @@
 package com.example.EventEase.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,11 +22,13 @@ public class Booking {
     // Many-to-one relationship with User (the one who booked)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties("bookings")
     private User user;
 
     // Many-to-one relationship with Event
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
+    @JsonIgnoreProperties("bookings")
     private Event event;
 
     @Column(nullable = false)

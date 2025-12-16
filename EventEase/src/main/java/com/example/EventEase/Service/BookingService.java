@@ -73,4 +73,9 @@ public class BookingService {
 
         return bookingRepository.findByUserId(userOpt.get().getId());
     }
+
+    public List<Booking> findAllBookingsByUserId(Long userId) {
+        // The repository handles returning an empty list if the user exists but has no bookings.
+        return bookingRepository.findByUserId(userId);
+    }
 }

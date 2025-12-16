@@ -1,10 +1,13 @@
 package com.example.EventEase.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
+
+import java.util.List;
 
 @Entity
 @Table(name = "admins")
@@ -30,6 +33,10 @@ public class Admin {
     private String password;
 
     private String contact;
+
+    @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore // <--- FIX APPLIED
+    private List<Event> createdEvents;
 
     private final String role = "ADMIN";
 }

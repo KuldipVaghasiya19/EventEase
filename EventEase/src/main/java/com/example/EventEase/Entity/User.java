@@ -1,5 +1,6 @@
 package com.example.EventEase.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -37,6 +38,9 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean currentlyStudyingOrNot;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore // <--- FIX APPLIED
+    private List<Booking> bookings;
 
     private final String role = "USER";
 }

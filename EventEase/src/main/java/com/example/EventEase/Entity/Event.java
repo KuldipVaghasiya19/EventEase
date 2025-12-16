@@ -1,5 +1,7 @@
 package com.example.EventEase.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,7 +50,14 @@ public class Event {
     private Integer bookedSeats = 0;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Booking> bookings;
+
+    // In Event.java:
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id", nullable = false)
+    @JsonIgnoreProperties("createdEvents")
+    private Admin admin;
 
     private String status = "UPCOMING";
 }

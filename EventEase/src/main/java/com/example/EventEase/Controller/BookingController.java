@@ -64,4 +64,18 @@ public class BookingController {
             return ResponseEntity.status(404).build();
         }
     }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Booking>> getBookingsByUserId(@PathVariable Long userId) {
+        // Authorization is handled by SecurityConfig (ROLE_ADMIN is required for /admin/**)
+
+        List<Booking> bookings = bookingService.findAllBookingsByUserId(userId);
+
+        if (bookings.isEmpty()) {
+            // Returning 200 OK with an empty list is generally preferred over 404
+            // when the user exists but has no results.
+            return ResponseEntity.ok(bookings);
+        }
+        return ResponseEntity.ok(bookings);
+    }
 }
