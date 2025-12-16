@@ -1,138 +1,113 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState } from 'react';
+import apiClient from '../../utils/apiClient';
+import { useNavigate, Link } from 'react-router-dom';
 
 const UserSignup = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    university: '',
+    course: '',
+    currentlyStudyingOrNot: true
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    setFormData({
+      ...formData,
+      [e.target.name]: value,
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
+    const payload = {
+      ...formData
+    };
 
-    setLoading(true);
+    try {
+      // POST /api/auth/register/user
+      await apiClient.post('/auth/register/user', payload);
+      
+      alert('User registration successful! Please log in.');
+      navigate('/login/user');
 
-    const { data, error: signUpError } = await signUp(email, password, username, 'user');
-
-    if (signUpError) {
-      setError(signUpError.message);
+    } catch (err) {
+      console.error('Registration failed:', err.response || err);
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (data) {
-      navigate('/user/events');
-    }
-
-    setLoading(false);
   };
 
+  const inputClass = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out";
+  const labelClass = "block text-sm font-medium text-gray-700";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">User Registration</h2>
-          <p className="text-gray-600">Create your account to book events</p>
-        </div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+      <div className="max-w-3xl w-full bg-white p-10 rounded-2xl shadow-2xl space-y-8">
+        <h2 className="text-center text-4xl font-extrabold text-primary-700 border-b pb-4">
+          User Account Registration
+        </h2>
+        
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          {error && <p className="p-3 bg-red-100 text-red-700 rounded-md text-sm">{error}</p>}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Column 1 */}
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="name" className={labelClass}>Full Name</label>
+                <input name="name" type="text" required placeholder="Jane Doe" value={formData.name} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="email" className={labelClass}>Email Address</label>
+                <input name="email" type="email" required placeholder="user@example.com" value={formData.email} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="password" className={labelClass}>Password</label>
+                <input name="password" type="password" required placeholder="********" value={formData.password} onChange={handleChange} className={inputClass} />
+              </div>
+              <div className="flex items-center space-x-4 pt-2">
+                <input id="studying" name="currentlyStudyingOrNot" type="checkbox" checked={formData.currentlyStudyingOrNot} onChange={handleChange} className="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
+                <label htmlFor="studying" className="text-sm font-medium text-gray-900">Currently Studying</label>
+              </div>
+            </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="username" className="block text-sm font-semibold text-gray-700 mb-2">
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="input-field"
-              placeholder="johndoe"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-field"
-              placeholder="user@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              required
-            />
+            {/* Column 2 */}
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="university" className={labelClass}>University / Institution</label>
+                <input name="university" type="text" required placeholder="State University of Tech" value={formData.university} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="course" className={labelClass}>Course / Major</label>
+                <input name="course" type="text" required placeholder="Computer Science" value={formData.course} onChange={handleChange} className={inputClass} />
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating Account...' : 'Sign Up'}
+        <button type="submit" disabled={loading} className="w-full py-3 px-4 text-lg font-semibold rounded-lg text-white bg-primary-700 hover:bg-primary-800 disabled:bg-primary-500 transition duration-150">            {loading ? 'Processing...' : 'Create User Account'}
           </button>
         </form>
-
-        <div className="mt-6 text-center">
+        
+        <div className="text-center text-sm">
           <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link to="/user/login" className="text-primary-600 hover:text-primary-700 font-semibold">
-              Sign in here
-            </Link>
+            Already registered?{' '}
+            <Link to="/login/user" className="font-medium text-primary-700 hover:text-indigo-800">Log in</Link>
+          </p>
+          <p className="mt-2 text-gray-600">
+            Switch to{' '}
+            <Link to="/signup/admin" className="font-medium text-primary-700 hover:text-indigo-800">Admin Registration</Link>
           </p>
         </div>
       </div>

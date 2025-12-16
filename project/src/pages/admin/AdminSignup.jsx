@@ -1,138 +1,117 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import React, { useState } from 'react';
+import apiClient from '../../utils/apiClient';
+import { useNavigate, Link } from 'react-router-dom';
 
 const AdminSignup = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    type: 'SYSTEM', 
+    location: '',
+    since: new Date().getFullYear(), // Default to current year
+    contact: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
   const navigate = useNavigate();
+
+  // AdminType enum options from Admin.java
+  const adminTypes = ['SYSTEM', 'SUPERVISOR', 'EVENT_MANAGER', 'OTHER'];
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+    try {
+      // POST /api/auth/register/admin
+      await apiClient.post('/auth/register/admin', formData);
+      
+      alert('Admin registration successful! Please log in.');
+      navigate('/login/admin');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
-    setLoading(true);
-
-    const { data, error: signUpError } = await signUp(email, password, username, 'admin');
-
-    if (signUpError) {
-      setError(signUpError.message);
+    } catch (err) {
+      console.error('Registration failed:', err.response || err);
+      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    if (data) {
-      navigate('/admin/dashboard');
-    }
-
-    setLoading(false);
   };
 
+  const inputClass = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out";
+  const labelClass = "block text-sm font-medium text-gray-700";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 animate-fade-in">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">Admin Registration</h2>
-          <p className="text-gray-600">Create your admin account</p>
-        </div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+      <div className="max-w-3xl w-full bg-white p-10 rounded-2xl shadow-2xl space-y-8">
+        <h2 className="text-center text-4xl font-extrabold text-primary-700 border-b pb-4">
+          Admin Account Registration
+        </h2>
+        
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          {error && <p className="p-3 bg-red-100 text-red-700 rounded-md text-sm">{error}</p>}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Column 1 */}
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="name" className={labelClass}>Organization Name</label>
+                <input name="name" type="text" required placeholder="Acme Events" value={formData.name} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="email" className={labelClass}>Email Address</label>
+                <input name="email" type="email" required placeholder="admin@example.com" value={formData.email} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="password" className={labelClass}>Password</label>
+                <input name="password" type="password" required placeholder="********" value={formData.password} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="type" className={labelClass}>Admin Type</label>
+                <select name="type" required value={formData.type} onChange={handleChange} className={inputClass}>
+                  {adminTypes.map(type => (<option key={type} value={type}>{type.replace('_', ' ')}</option>))}
+                </select>
+              </div>
+            </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="username" className="block text-sm font-semibold text-gray-700 mb-2">
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="input-field"
-              placeholder="johndoe"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-              Email Address
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="input-field"
-              placeholder="admin@example.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              required
-            />
+            {/* Column 2 */}
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="location" className={labelClass}>Location</label>
+                <input name="location" type="text" required placeholder="City, Country" value={formData.location} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="since" className={labelClass}>Established Year (Since)</label>
+                <input name="since" type="number" required placeholder="2024" value={formData.since} onChange={handleChange} className={inputClass} />
+              </div>
+              <div>
+                <label htmlFor="contact" className={labelClass}>Contact Number</label>
+                <input name="contact" type="text" placeholder="+91-653-555-1234" value={formData.contact} onChange={handleChange} className={inputClass} />
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="input-field"
-              placeholder="••••••••"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating Account...' : 'Sign Up'}
+        <button type="submit" disabled={loading} className="w-full py-3 px-4 text-lg font-semibold rounded-lg text-white bg-primary-700 hover:bg-primary-800 disabled:bg-primary-500 transition duration-150">            {loading ? 'Processing...' : 'Create Admin Account'}
           </button>
         </form>
-
-        <div className="mt-6 text-center">
+        
+        <div className="text-center text-sm">
           <p className="text-gray-600">
-            Already have an account?{' '}
-            <Link to="/admin/login" className="text-primary-600 hover:text-primary-700 font-semibold">
-              Sign in here
-            </Link>
+            Already registered?{' '}
+            <Link to="/login/admin" className="font-medium text-primary-700 hover:text-indigo-800">Log in</Link>
+          </p>
+          <p className="mt-2 text-gray-600">
+            Switch to{' '}
+            <Link to="/signup/user" className="font-medium text-primary-700 hover:text-indigo-800">User Registration</Link>
           </p>
         </div>
       </div>
