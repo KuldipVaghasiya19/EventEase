@@ -1,15 +1,16 @@
 package com.example.EventEase.Security;
 
-import com.example.EventEase.Service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
@@ -26,15 +27,16 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // FIX APPLIED: Removed the duplicate @Bean public PasswordEncoder passwordEncoder() {}
-    // It is now assumed to be correctly defined in com/example/EventEase/config/PasswordConfig.class
+    // FIX 1: Centralize PasswordEncoder here. MUST DELETE/DISABLE PasswordConfig.java
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
-    // Note: The problematic 'authenticationProvider' bean is not needed here.
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -55,7 +57,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // Configure context repository for session persistence
+                // FIX 2: Enable Basic Auth. This is what calls your CustomUserDetailsService.
+                .httpBasic(Customizer.withDefaults())
+
                 .securityContext(context -> context
                         .securityContextRepository(new DelegatingSecurityContextRepository(
                                 new RequestAttributeSecurityContextRepository(),
@@ -66,15 +70,18 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
                 )
 
-                // Spring will automatically configure the authentication mechanism
-                // using the CustomUserDetailsService and the existing PasswordEncoder bean.
-
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Authorization Rules
+                        // Event public read access (Unprotected)
+                        .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/{id}").permitAll()
+
+                        // Authorization Rules (These are the protected endpoints)
+                        .requestMatchers("/api/events/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/bookings/user/**").hasRole("USER")
                         .requestMatchers("/api/user/**").hasRole("USER")
 
                         .anyRequest().authenticated()

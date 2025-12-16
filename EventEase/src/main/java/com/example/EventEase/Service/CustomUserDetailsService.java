@@ -29,6 +29,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+
+        System.out.println("Entered in cus.");
         List<GrantedAuthority> authorities = new ArrayList<>();
 
         // 1. Try to find an Admin (ROLE_ADMIN)
