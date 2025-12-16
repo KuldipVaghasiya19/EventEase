@@ -6,21 +6,22 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
-import java.util.List;
-
 @Entity
-@Table(name = "users")
+@Table(name = "admins")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class Admin {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // Changed from String id (MongoDB) to Long id (JPA)
 
     @NonNull
     private String name;
+
+    @NonNull
+    private String location;
 
     @NonNull
     private String email;
@@ -28,15 +29,7 @@ public class User {
     @NonNull
     private String password;
 
-    @NonNull
-    private String university;
+    private String contact;
 
-    @NonNull
-    private String course;
-
-    @Column(nullable = false, columnDefinition = "boolean default true")
-    private boolean currentlyStudyingOrNot;
-
-
-    private final String role = "USER";
+    private final String role = "ADMIN";
 }
