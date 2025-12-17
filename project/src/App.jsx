@@ -1,89 +1,58 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Navbar from './components/common/Navbar';
-import Home from './pages/Home';
-import AdminLogin from './pages/admin/AdminLogin';
-import AdminSignup from './pages/admin/AdminSignup';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import ManageEvents from './pages/admin/ManageEvents';
-import UserLogin from './pages/user/UserLogin';
-import UserSignup from './pages/user/UserSignup';
-import Events from './pages/user/Events';
-import MyBookings from './pages/user/MyBookings';
+import React from 'react';
+import { Routes, Route } from "react-router-dom";
+import Navbar from "./components/common/Navbar";
+import Footer from "./components/common/Footer";
+import HomePage from "./pages/HomePage";
+import EventsPage from "./pages/user/EventsPage";
+import GetStarted from "./pages/GetStarted"; 
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserDashboard from "./pages/user/UserDashboard";
+import AdminLogin from "./pages/admin/AdminLogin";
+import UserLogin from "./pages/user/UserLogin";
+import ManageEvents from "./pages/admin/ManageEvents";
+import EventDetails from './pages/user/EventDetails';
+import LoginSelection from "./pages/LoginSelection"; // New Page
 
-const ProtectedRoute = ({ children, requiredRole }) => {
-  const { user, userRole, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to={requiredRole === 'admin' ? '/admin/login' : '/user/login'} />;
-  }
-
-  if (requiredRole && userRole !== requiredRole) {
-    return <Navigate to="/" />;
-  }
-
-  return children;
-};
-
-function AppContent() {
-  return (
-    <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/signup" element={<AdminSignup />} />
-          <Route
-            path="/admin/dashboard"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/events"
-            element={
-              <ProtectedRoute requiredRole="admin">
-                <ManageEvents />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route path="/user/login" element={<UserLogin />} />
-          <Route path="/user/signup" element={<UserSignup />} />
-          <Route path="/user/events" element={<Events />} />
-          <Route
-            path="/user/bookings"
-            element={
-              <ProtectedRoute requiredRole="user">
-                <MyBookings />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
-    </Router>
-  );
-}
+// Placeholder components
+const Placeholder = ({ title }) => (
+  <div className="pt-32 pb-20 text-center min-h-screen bg-slate-50">
+    <h1 className="text-4xl font-black text-slate-900 uppercase tracking-tight">{title}</h1>
+    <p className="text-slate-500 mt-4 font-medium uppercase text-xs tracking-widest">Available Soon</p>
+  </div>
+);
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <div className="flex flex-col min-h-screen">
+      <Navbar />
+      <main className="flex-grow">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/events" element={<EventsPage />} />
+          <Route path="/get-started" element={<GetStarted />} />
+          <Route path="/login-selection" element={<LoginSelection />} />
+          
+          {/* Footer & Other Routes */}
+          <Route path="/about" element={<Placeholder title="About Us" />} />
+          <Route path="/contact" element={<Placeholder title="Contact Us" />} />
+          <Route path="/help" element={<Placeholder title="Help Center" />} />
+          <Route path="/terms" element={<Placeholder title="Terms" />} />
+          <Route path="/privacy" element={<Placeholder title="Privacy" />} />
+          
+          {/* Authentication */}
+          <Route path="/login/user" element={<UserLogin />} />
+          <Route path="/login/admin" element={<AdminLogin />} />
+
+          {/* Dashboards */}
+          <Route path="/user/dashboard" element={<UserDashboard />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+         <Route path="/admin/manage-events/:id?" element={<ManageEvents />} />
+
+          <Route path="/events/:id" element={<EventDetails />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   );
 }
 

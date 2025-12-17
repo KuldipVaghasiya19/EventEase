@@ -1,115 +1,125 @@
 import React, { useState } from 'react';
-import apiClient from '../../utils/apiClient';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const UserSignup = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     university: '',
     course: '',
     currentlyStudyingOrNot: true
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const { signUp } = useAuth(); 
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (formData.password !== formData.confirmPassword) {
+      return setError('Passwords do not match');
+    }
+
     setLoading(true);
     setError('');
 
-
-    const payload = {
-      ...formData
+    // CRITICAL: The keys here must match User.java exactly
+    const registrationPayload = {
+      name: formData.name,       // Must not be null
+      email: formData.email,     // Must not be null
+      password: formData.password, // Must not be null
+      university: formData.university, // Must not be null
+      course: formData.course,         // Must not be null
+      currentlyStudyingOrNot: formData.currentlyStudyingOrNot // Boolean Wrapper
     };
 
-    try {
-      // POST /api/auth/register/user
-      await apiClient.post('/auth/register/user', payload);
-      
-      alert('User registration successful! Please log in.');
-      navigate('/login/user');
+    const { data, error: signUpError } = await signUp(registrationPayload, 'user');
 
-    } catch (err) {
-      console.error('Registration failed:', err.response || err);
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
-    } finally {
+    if (signUpError) {
+      setError(signUpError);
       setLoading(false);
+      return;
     }
+
+    if (data) {
+      alert('Registration successful! Redirecting to login...');
+      navigate('/login/user');
+    }
+    setLoading(false);
   };
 
-  const inputClass = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out";
-  const labelClass = "block text-sm font-medium text-gray-700";
+  const inputClass = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 outline-none transition-all";
+  const labelClass = "block text-sm font-semibold text-gray-700 mb-1";
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      <div className="max-w-3xl w-full bg-white p-10 rounded-2xl shadow-2xl space-y-8">
-        <h2 className="text-center text-4xl font-extrabold text-primary-700 border-b pb-4">
-          User Account Registration
-        </h2>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <h2 className="text-3xl font-bold text-center text-gray-900 mb-8">User Sign Up</h2>
         
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          {error && <p className="p-3 bg-red-100 text-red-700 rounded-md text-sm">{error}</p>}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Column 1 */}
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="name" className={labelClass}>Full Name</label>
-                <input name="name" type="text" required placeholder="Jane Doe" value={formData.name} onChange={handleChange} className={inputClass} />
-              </div>
-              <div>
-                <label htmlFor="email" className={labelClass}>Email Address</label>
-                <input name="email" type="email" required placeholder="user@example.com" value={formData.email} onChange={handleChange} className={inputClass} />
-              </div>
-              <div>
-                <label htmlFor="password" className={labelClass}>Password</label>
-                <input name="password" type="password" required placeholder="********" value={formData.password} onChange={handleChange} className={inputClass} />
-              </div>
-              <div className="flex items-center space-x-4 pt-2">
-                <input id="studying" name="currentlyStudyingOrNot" type="checkbox" checked={formData.currentlyStudyingOrNot} onChange={handleChange} className="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500" />
-                <label htmlFor="studying" className="text-sm font-medium text-gray-900">Currently Studying</label>
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-200">
+              {error}
             </div>
+          )}
 
-            {/* Column 2 */}
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="university" className={labelClass}>University / Institution</label>
-                <input name="university" type="text" required placeholder="State University of Tech" value={formData.university} onChange={handleChange} className={inputClass} />
-              </div>
-              <div>
-                <label htmlFor="course" className={labelClass}>Course / Major</label>
-                <input name="course" type="text" required placeholder="Computer Science" value={formData.course} onChange={handleChange} className={inputClass} />
-              </div>
+          <div>
+            <label className={labelClass}>Full Name</label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange} className={inputClass} placeholder="Jane Doe" required />
+          </div>
+
+          <div>
+            <label className={labelClass}>Email Address</label>
+            <input type="email" name="email" value={formData.email} onChange={handleChange} className={inputClass} placeholder="jane@example.com" required />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>University</label>
+              <input type="text" name="university" value={formData.university} onChange={handleChange} className={inputClass} required />
+            </div>
+            <div>
+              <label className={labelClass}>Course</label>
+              <input type="text" name="course" value={formData.course} onChange={handleChange} className={inputClass} required />
             </div>
           </div>
 
-        <button type="submit" disabled={loading} className="w-full py-3 px-4 text-lg font-semibold rounded-lg text-white bg-primary-700 hover:bg-primary-800 disabled:bg-primary-500 transition duration-150">            {loading ? 'Processing...' : 'Create User Account'}
+          <div>
+            <label className={labelClass}>Password</label>
+            <input type="password" name="password" value={formData.password} onChange={handleChange} className={inputClass} placeholder="••••••••" required />
+          </div>
+
+          <div>
+            <label className={labelClass}>Confirm Password</label>
+            <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className={inputClass} placeholder="••••••••" required />
+          </div>
+
+          <div className="flex items-center gap-2 py-2">
+            <input type="checkbox" id="studying" name="currentlyStudyingOrNot" checked={formData.currentlyStudyingOrNot} onChange={handleChange} className="h-4 w-4 text-blue-600" />
+            <label htmlFor="studying" className="text-sm text-gray-700 font-medium">Currently Studying</label>
+          </div>
+
+          <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition disabled:opacity-50">
+            {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
-        
-        <div className="text-center text-sm">
-          <p className="text-gray-600">
-            Already registered?{' '}
-            <Link to="/login/user" className="font-medium text-primary-700 hover:text-indigo-800">Log in</Link>
-          </p>
-          <p className="mt-2 text-gray-600">
-            Switch to{' '}
-            <Link to="/signup/admin" className="font-medium text-primary-700 hover:text-indigo-800">Admin Registration</Link>
-          </p>
-        </div>
+
+        <p className="mt-6 text-center text-gray-600 text-sm">
+          Already have an account? <Link to="/login/user" className="text-blue-600 font-bold hover:underline">Log in</Link>
+        </p>
       </div>
     </div>
   );
