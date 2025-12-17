@@ -85,12 +85,6 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/**").hasRole("USER")
 
                         .anyRequest().authenticated()
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/api/auth/logout")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                        .permitAll()
                 );
 
         return http.build();

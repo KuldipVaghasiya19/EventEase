@@ -1,5 +1,6 @@
 package com.example.EventEase.Entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -33,10 +34,11 @@ public class Event {
     @Column(name = "tag_name")
     private Set<String> tags;
 
-    @NonNull
+
     private String organizationName;
 
     @NonNull
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime date;
 
     @NonNull

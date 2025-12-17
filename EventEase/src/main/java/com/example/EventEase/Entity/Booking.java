@@ -1,5 +1,6 @@
 package com.example.EventEase.Entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -34,6 +35,7 @@ public class Booking {
     @Column(nullable = false)
     private int seatsBooked;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime bookingTime = LocalDateTime.now();
 
     // Status can be CONFIRMED, CANCELLED, etc.

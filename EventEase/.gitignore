@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Application configuration files for Spring/Java/Maven projects
+/src/main/resources/application.properties

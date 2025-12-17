@@ -36,7 +36,7 @@ public class User {
     private String course;
 
     @Column(nullable = false, columnDefinition = "boolean default true")
-    private boolean currentlyStudyingOrNot;
+    private Boolean currentlyStudyingOrNot;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore // <--- FIX APPLIED

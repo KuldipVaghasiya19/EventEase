@@ -5,9 +5,10 @@ import com.example.EventEase.Entity.User;
 import com.example.EventEase.Service.AdminService;
 import com.example.EventEase.Service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.Data; // Ensure Lombok is available
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException; // New Import
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,11 +37,16 @@ public class AuthController {
         this.authenticationManager = authenticationManager;
     }
 
-    // --- Registration Endpoints (REMAINS THE SAME) ---
-    // AuthController.java snippet:
+    // --- Login DTO to prevent Null errors on Entity fields like 'name' ---
+    @Data
+    public static class LoginRequest {
+        private String email;
+        private String password;
+    }
+
     @PostMapping("/register/admin")
     public ResponseEntity<?> registerAdmin(@RequestBody Admin admin) {
-        admin.setPassword(passwordEncoder.encode(admin.getPassword())); // This line hashes the password
+        admin.setPassword(passwordEncoder.encode(admin.getPassword()));
         Admin savedAdmin = adminService.createAdmin(admin);
         return ResponseEntity.ok(savedAdmin);
     }
@@ -52,58 +58,40 @@ public class AuthController {
         return ResponseEntity.ok(savedUser);
     }
 
-    // --- Login Endpoints (FIXED) ---
-
     @PostMapping("/login/admin")
-    public ResponseEntity<?> loginAdmin(@RequestBody Admin loginRequest, HttpServletRequest httpRequest) {
-
+    public ResponseEntity<?> loginAdmin(@RequestBody LoginRequest loginRequest, HttpServletRequest httpRequest) {
         try {
-            // 1. Authenticate using Spring Security. This handles password matching via CustomUserDetailsService.
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
 
-            // 2. Set the security context for the current session
             SecurityContextHolder.getContext().setAuthentication(auth);
             httpRequest.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 
-            // 3. Return the logged-in user object (for frontend data)
             Optional<Admin> adminOptional = adminService.findByEmail(loginRequest.getEmail());
-            if (adminOptional.isPresent()) {
-                return ResponseEntity.ok(adminOptional.get());
-            } else {
-                return ResponseEntity.status(500).body("Authentication succeeded, but user data retrieval failed.");
-            }
+            return adminOptional.<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(500).body("Authentication succeeded, but user data retrieval failed."));
 
         } catch (BadCredentialsException e) {
-            // Catches invalid password/username attempts (401)
             return ResponseEntity.status(401).body("Invalid email or password.");
         } catch (Exception e) {
-            // Catches other issues like user not found in CustomUserDetailsService (401)
             return ResponseEntity.status(401).body(e.getMessage());
         }
     }
 
     @PostMapping("/login/user")
-    public ResponseEntity<?> loginUser(@RequestBody User loginRequest, HttpServletRequest httpRequest) {
-
+    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest, HttpServletRequest httpRequest) {
         try {
-            // 1. Authenticate using Spring Security.
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
             );
 
-            // 2. Set the security context for the current session
             SecurityContextHolder.getContext().setAuthentication(auth);
             httpRequest.getSession(true).setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
 
-            // 3. Return the logged-in user object
             Optional<User> userOpt = userService.findByEmail(loginRequest.getEmail());
-            if (userOpt.isPresent()) {
-                return ResponseEntity.ok(userOpt.get());
-            } else {
-                return ResponseEntity.status(500).body("Authentication succeeded, but user data retrieval failed.");
-            }
+            return userOpt.<ResponseEntity<?>>map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(500).body("Authentication succeeded, but user data retrieval failed."));
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(401).body("Invalid email or password.");
