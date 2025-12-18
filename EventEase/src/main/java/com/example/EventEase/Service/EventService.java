@@ -90,4 +90,8 @@ public class EventService {
     public Optional<Event> findEventById(Long id) {
         return eventRepository.findById(id);
     }
+
+    public List<Event> findEventsByAdminEmail(String email) {
+        return eventRepository.findByAdminEmail(email);
+    }
 }

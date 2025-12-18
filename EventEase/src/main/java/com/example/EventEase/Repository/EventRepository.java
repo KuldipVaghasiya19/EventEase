@@ -10,4 +10,5 @@ import java.util.List;
 public interface EventRepository extends JpaRepository<Event, Long> {
     // Basic CRUD operations are inherited
     List<Event> findByAdminEmail(String email);
+    List<Event> findByOrganizationName(String orgName);
 }

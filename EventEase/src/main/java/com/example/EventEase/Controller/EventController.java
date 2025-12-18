@@ -89,4 +89,15 @@ public class EventController {
         return event.map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
+
+    // src/main/java/com/example/EventEase/Controller/EventController.java
+
+    // Add this mapping inside the EventController class
+    @GetMapping("/admin/my-events")
+    public ResponseEntity<List<Event>> getMyEvents(Authentication authentication) {
+        // authentication.getName() retrieves the email/username of the logged-in admin
+        String adminEmail = authentication.getName();
+        List<Event> myEvents = eventService.findEventsByAdminEmail(adminEmail);
+        return ResponseEntity.ok(myEvents);
+    }
 }
