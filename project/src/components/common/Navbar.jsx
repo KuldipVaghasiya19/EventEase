@@ -69,15 +69,15 @@ const Navbar = () => {
             </div>
           ) : (
             <div className="flex items-center gap-4">
-              {/* UPDATED: Now points to the selection page */}
               <Link to="/login-selection" className={`text-sm font-black tracking-widest transition-colors ${isActive('/login-selection') ? 'text-indigo-600' : 'text-slate-600 hover:text-indigo-600'} px-4`}>
                 LOGIN
               </Link>
+              {/* UPDATED: Points to Signup Selection instead of Get Started */}
               <Link 
-                to="/get-started" 
+                to="/signup-selection" 
                 className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl font-black text-xs tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all"
               >
-                GET STARTED
+                SIGN UP
               </Link>
             </div>
           )}

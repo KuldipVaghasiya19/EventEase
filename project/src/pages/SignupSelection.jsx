@@ -2,22 +2,22 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, ShieldCheck, ArrowRight } from 'lucide-react';
 
-const LoginSelection = () => {
+const SignupSelection = () => {
   const navigate = useNavigate();
 
   const selectionCards = [
     {
       title: "User",
-      description: "Sign in to explore events, book seats, and manage your tickets.",
+      description: "Create an account to explore upcoming events, book seats, and manage your personal tickets.",
       icon: User,
-      path: "/login/user",
+      path: "/signup/user", // Points to your UserSignup.jsx route
       color: "indigo"
     },
     {
       title: "Administrator",
-      description: "Access the organization portal to create and manage your events.",
+      description: "Register your organization to start hosting events, managing registrations, and generating reports.",
       icon: ShieldCheck,
-      path: "/login/admin",
+      path: "/signup/admin", // Points to your AdminSignup.jsx route
       color: "slate"
     }
   ];
@@ -27,10 +27,10 @@ const LoginSelection = () => {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl font-black text-slate-900 mb-4 uppercase tracking-tight">
-            Welcome <span className="text-indigo-600">Back</span>
+            Create <span className="text-indigo-600">Account</span>
           </h1>
-          <p className="text-slate-500 font-medium">
-            Please select your portal to continue.
+          <p className="text-slate-500 font-medium italic">
+            Select your account type to begin your journey with EventEase.
           </p>
         </div>
 
@@ -55,7 +55,7 @@ const LoginSelection = () => {
               </p>
               
               <div className="flex items-center gap-2 text-indigo-600 font-black text-xs tracking-widest uppercase">
-                Enter Portal <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-2" />
+                Start Registration <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-2" />
               </div>
             </button>
           ))}
@@ -63,7 +63,7 @@ const LoginSelection = () => {
 
         <div className="text-center mt-12">
           <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">
-            Don't have an account? <span onClick={() => navigate('/signup-selection')} className="text-indigo-600 cursor-pointer hover:underline ml-2">Register here</span>
+            Already have an account? <span onClick={() => navigate('/login-selection')} className="text-indigo-600 cursor-pointer hover:underline ml-2">Log in here</span>
           </p>
         </div>
       </div>
@@ -71,4 +71,4 @@ const LoginSelection = () => {
   );
 };
 
-export default LoginSelection;
+export default SignupSelection;

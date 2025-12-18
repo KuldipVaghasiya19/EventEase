@@ -21,7 +21,6 @@ const AdminLogin = () => {
       setError(signInError);
       setLoading(false);
     } else if (data) {
-      // Direct navigation on success
       navigate('/admin/dashboard', { replace: true });
     }
   };
@@ -76,7 +75,7 @@ const AdminLogin = () => {
 
         <div className="mt-6 text-center">
           <p className="text-gray-600">
-            Need an admin account? <Link to="/admin/signup" className="text-indigo-600 hover:underline font-semibold">Register here</Link>
+            Need an admin account? <Link to="/signup/admin" className="text-indigo-600 hover:underline font-semibold">Register here</Link>
           </p>
         </div>
       </div>

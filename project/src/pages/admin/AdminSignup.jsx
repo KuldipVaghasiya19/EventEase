@@ -1,89 +1,102 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { Eye, EyeOff } from 'lucide-react';
 
 const AdminSignup = () => {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    type: 'SYSTEM',
-    location: '',
-    since: new Date().getFullYear(),
+    name: '', email: '', contact: '', password: '', confirmPassword: '',
+    location: '', type: 'SYSTEM', since: new Date().getFullYear(),
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
   const { signUp } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    if (formData.password !== formData.confirmPassword) return setError('Passwords do not match');
     setError('');
+    setLoading(true);
 
-    // Maps to backend @PostMapping("/api/auth/register/admin")
     const { data, error: signUpError } = await signUp({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      type: formData.type,
-      location: formData.location,
+      name: formData.name, email: formData.email, contact: formData.contact,
+      password: formData.password, type: formData.type, location: formData.location,
       since: parseInt(formData.since)
     }, 'admin');
 
     if (signUpError) {
-      setError(signUpError.message);
+      setError(signUpError.message || signUpError);
       setLoading(false);
-      return;
-    }
-
-    if (data) {
-      alert('Admin registration successful! Please log in.');
+    } else if (data) {
+      alert('Admin registration successful!');
       navigate('/login/admin');
     }
-    setLoading(false);
   };
 
-  const inputClass = "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 transition duration-150";
-  const labelClass = "block text-sm font-medium text-gray-700 mb-1";
-
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl space-y-6">
-        <h2 className="text-center text-3xl font-extrabold text-gray-900">Admin Signup</h2>
-        
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          {error && <p className="p-2 bg-red-100 text-red-700 rounded text-sm">{error}</p>}
-          
-          <div>
-            <label className={labelClass}>Organization Name</label>
-            <input name="name" type="text" required value={formData.name} onChange={handleChange} className={inputClass} />
+    <div className="min-h-screen bg-indigo-50 flex items-center justify-center px-4 py-12">
+      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-10">
+        <div className="text-center mb-10">
+          <h2 className="text-4xl font-bold text-gray-800">Admin Signup</h2>
+          <p className="text-gray-600 mt-2">Create your organization account</p>
+        </div>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 text-center text-sm font-semibold">
+            {error}
           </div>
-          <div>
-            <label className={labelClass}>Email Address</label>
-            <input name="email" type="email" required value={formData.email} onChange={handleChange} className={inputClass} />
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Org Name</label>
+              <input name="name" type="text" value={formData.name} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" required />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Admin Email</label>
+              <input name="email" type="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="admin@org.com" required />
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Location</label>
-            <input name="location" type="text" required value={formData.location} onChange={handleChange} className={inputClass} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Contact Number</label>
+              <input name="contact" type="text" value={formData.contact} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="+91..." required />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
+              <input name="location" type="text" value={formData.location} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" required />
+            </div>
           </div>
-          <div>
-            <label className={labelClass}>Password</label>
-            <input name="password" type="password" required value={formData.password} onChange={handleChange} className={inputClass} />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+              <input name="password" type={showPassword ? "text" : "password"} value={formData.password} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••" required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-10 text-gray-400 hover:text-indigo-600 transition-colors">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+              <input name="confirmPassword" type={showPassword ? "text" : "password"} value={formData.confirmPassword} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="••••••••" required />
+            </div>
           </div>
-          
-          <button type="submit" disabled={loading} className="w-full py-2 px-4 bg-primary-700 text-white rounded-lg hover:bg-primary-800 transition">
-            {loading ? 'Registering...' : 'Register Admin'}
+
+          <button type="submit" disabled={loading} className="w-full bg-indigo-600 text-white py-3.5 rounded-lg font-bold hover:bg-indigo-700 transition shadow-lg disabled:opacity-50">
+            {loading ? 'Authenticating...' : 'Register Admin Account'}
           </button>
         </form>
-        
-        <div className="text-center text-sm text-gray-600">
-          Already have an account? <Link to="/login/admin" className="text-primary-700 font-bold">Log in</Link>
+
+        <div className="mt-8 text-center">
+          <p className="text-gray-600">
+            Already registered? <Link to="/login/admin" className="text-indigo-600 hover:underline font-semibold">Sign in</Link>
+          </p>
         </div>
       </div>
     </div>

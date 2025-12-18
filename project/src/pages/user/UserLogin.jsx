@@ -21,7 +21,6 @@ const UserLogin = () => {
       setError(signInError);
       setLoading(false);
     } else if (data) {
-      // Direct navigation on success
       navigate('/user/dashboard', { replace: true });
     }
   };
@@ -76,7 +75,7 @@ const UserLogin = () => {
 
         <div className="mt-6 text-center">
           <p className="text-gray-600">
-            Don't have an account? <Link to="/user/signup" className="text-blue-600 hover:underline font-semibold">Sign up</Link>
+            Don't have an account? <Link to="/signup/user" className="text-blue-600 hover:underline font-semibold">Register here</Link>
           </p>
         </div>
       </div>
