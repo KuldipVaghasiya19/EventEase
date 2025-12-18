@@ -46,22 +46,25 @@ const UserDashboard = () => {
 
   // 2. Cancellation Logic
   const handleCancel = async (bookingId) => {
-    const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this reservation? This will restore the seat for other participants."
-    );
+  if (!bookingId) {
+    alert("Error: Invalid Booking ID");
+    return;
+  }
 
-    if (!confirmCancel) return;
+  const confirmCancel = window.confirm("Are you sure you want to cancel this ticket?");
+  if (!confirmCancel) return;
 
-    try {
-      await apiClient.delete(`/bookings/cancel/${bookingId}`);
-      // Refresh list immediately after cancellation
-      fetchMyData(); 
-    } catch (error) {
-      console.error('Cancellation error:', error);
-      alert(error.response?.data || "Failed to cancel booking. Please try again.");
-    }
-  };
-
+  try {
+    // Log the ID to console to verify it is a real number before sending
+    console.log("Attempting to cancel Booking ID:", bookingId);
+    
+    await apiClient.delete(`/bookings/cancel/${bookingId}`);
+    fetchMyData(); // Refresh the list
+  } catch (error) {
+    console.error('Cancellation error details:', error.response);
+    alert(error.response?.data || "Failed to cancel ticket.");
+  }
+};
   const handleLogout = async () => {
     await signOut();
     navigate('/');
