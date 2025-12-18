@@ -17,7 +17,9 @@ import java.time.LocalDateTime;
 public class Booking {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seq1")
+    // This one line (the @SequenceGenerator) makes your IDs look professional (e.g., 102541, 102542)
+    @SequenceGenerator(name = "booking_seq1", sequenceName = "booking_id_seq", initialValue = 19325, allocationSize = 5)
     private Long id;
 
     // Many-to-one relationship with User (the one who booked)

@@ -1,6 +1,8 @@
 package com.example.EventEase.Repository;
 
 import com.example.EventEase.Entity.Booking;
+import com.example.EventEase.Entity.Event;
+import com.example.EventEase.Entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +15,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     // Retrieve all bookings for a specific user (My Bookings list)
     List<Booking> findByUserId(Long userId);
 
+    boolean existsByUserAndEvent(User user, Event event);
     // Check if a user has any active booking for a specific event (optional check)
     Optional<Booking> findByUserIdAndEventId(Long userId, Long eventId);
 }

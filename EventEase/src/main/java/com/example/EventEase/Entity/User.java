@@ -17,7 +17,9 @@ import java.util.List;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seq3")
+    // This one line (the @SequenceGenerator) makes your IDs look professional (e.g., 102541, 102542)
+    @SequenceGenerator(name = "booking_seq3", sequenceName = "user_id_seq", initialValue = 30104, allocationSize = 5)
     private Long id;
 
     @NonNull

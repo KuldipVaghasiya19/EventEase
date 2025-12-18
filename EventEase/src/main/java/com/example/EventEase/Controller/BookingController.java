@@ -7,6 +7,7 @@ import com.example.EventEase.Repository.BookingRepository;
 import com.example.EventEase.Repository.EventRepository;
 import com.example.EventEase.Service.BookingService;
 import com.example.EventEase.Service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,7 +43,6 @@ public class BookingController {
 
     @PostMapping("/reserve/{eventId}")
     public ResponseEntity<?> bookTicket(@PathVariable Long eventId) {
-        // 1. Get logged in user email from Security Context
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> userOpt = userService.findByEmail(email);
         Optional<Event> eventOpt = eventRepository.findById(eventId);
@@ -51,25 +51,27 @@ public class BookingController {
             return ResponseEntity.badRequest().body("User or Event not found");
         }
 
-        Event event = eventOpt.get();
         User user = userOpt.get();
+        Event event = eventOpt.get();
 
-        // 2. Check seat availability
-        if (event.getBookedSeats() >= event.getTotalSeats()) {
-            return ResponseEntity.badRequest().body("No seats available for this event");
+        // --- DUPLICATE CHECK ---
+        if (bookingRepository.existsByUserAndEvent(user, event)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("You have already booked a ticket for this event.");
         }
 
-        // 3. Create Booking
+        if (event.getBookedSeats() >= event.getTotalSeats()) {
+            return ResponseEntity.badRequest().body("No seats available.");
+        }
+
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setEvent(event);
         booking.setBookingTime(LocalDateTime.now());
         booking.setSeatsBooked(1);
 
-        // 4. Update Event Booked Seats count
         event.setBookedSeats(event.getBookedSeats() + 1);
 
-        // 5. Save both
         bookingRepository.save(booking);
         eventRepository.save(event);
 
@@ -106,36 +108,39 @@ public class BookingController {
 
     @DeleteMapping("/cancel/{bookingId}")
     public ResponseEntity<?> cancelBooking(@PathVariable Long bookingId) {
-        // 1. Identify logged-in user
+        // 1. Get current authenticated user's email
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Optional<User> userOpt = userService.findByEmail(email);
+        Optional<User> currentUserOpt = userService.findByEmail(email);
 
-        // 2. Find the booking
-        Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
-
-        if (bookingOpt.isEmpty() || userOpt.isEmpty()) {
-            return ResponseEntity.status(404).body("Booking not found");
+        if (currentUserOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User session not found");
         }
 
-        Booking booking = bookingOpt.get();
+        User currentUser = currentUserOpt.get();
 
-        // 3. Security Check: Ensure the booking belongs to the requester
-        if (!booking.getUser().getEmail().equals(email)) {
-            return ResponseEntity.status(403).body("Unauthorized to cancel this booking");
-        }
+        // 2. Find booking and validate ownership
+        return bookingRepository.findById(bookingId).map(booking -> {
 
-        // 4. Update Event Seat Count (Restore the seat)
-        Event event = booking.getEvent();
-        int seatsToRestore = booking.getSeatsBooked();
-        event.setBookedSeats(Math.max(0, event.getBookedSeats() - seatsToRestore));
+            // 3. Compare User IDs to avoid "Access Denied"
+            // Ensure you use .getId() and .equals()
+            if (!booking.getUser().getId().equals(currentUser.getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("Access Denied: You do not own this booking");
+            }
 
-        // 5. Delete booking and save event changes
-        eventRepository.save(event);
-        bookingRepository.delete(booking);
+            // 4. Update Event Seat Count
+            Event event = booking.getEvent();
+            if (event != null) {
+                event.setBookedSeats(Math.max(0, event.getBookedSeats() - 1));
+                eventRepository.save(event);
+            }
 
-        return ResponseEntity.ok("Booking cancelled and seat restored successfully");
+            // 5. Delete the booking
+            bookingRepository.delete(booking);
+            return ResponseEntity.ok("Booking cancelled successfully");
+
+        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking not found"));
     }
-
     // src/main/java/com/example/EventEase/Controller/BookingController.java
 
     @GetMapping("/admin/registrations")

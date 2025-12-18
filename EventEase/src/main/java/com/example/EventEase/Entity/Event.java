@@ -21,7 +21,9 @@ import java.util.Set;
 public class Event {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seq2")
+    // This one line (the @SequenceGenerator) makes your IDs look professional (e.g., 102541, 102542)
+    @SequenceGenerator(name = "booking_seq2", sequenceName = "event_id_seq", initialValue = 16205, allocationSize = 6)
     private Long id;
 
     @NonNull

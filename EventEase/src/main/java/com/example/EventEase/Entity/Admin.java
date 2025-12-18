@@ -17,8 +17,10 @@ import java.util.List;
 public class Admin {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // Changed from String id (MongoDB) to Long id (JPA)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seq")
+    // This one line (the @SequenceGenerator) makes your IDs look professional (e.g., 102541, 102542)
+    @SequenceGenerator(name = "booking_seq", sequenceName = "admin_id_seq", initialValue = 102541, allocationSize = 5)
+    private Long id;// Changed from String id (MongoDB) to Long id (JPA)
 
     @NonNull
     private String name;
