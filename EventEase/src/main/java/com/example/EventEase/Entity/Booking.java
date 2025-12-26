@@ -18,17 +18,14 @@ public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seq1")
-    // This one line (the @SequenceGenerator) makes your IDs look professional (e.g., 102541, 102542)
     @SequenceGenerator(name = "booking_seq1", sequenceName = "booking_id_seq", initialValue = 19325, allocationSize = 5)
     private Long id;
 
-    // Many-to-one relationship with User (the one who booked)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnoreProperties("bookings")
     private User user;
 
-    // Many-to-one relationship with Event
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
     @JsonIgnoreProperties("bookings")
@@ -40,6 +37,5 @@ public class Booking {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime bookingTime = LocalDateTime.now();
 
-    // Status can be CONFIRMED, CANCELLED, etc.
     private String status = "CONFIRMED";
 }

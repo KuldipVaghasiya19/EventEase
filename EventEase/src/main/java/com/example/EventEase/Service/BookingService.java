@@ -27,7 +27,6 @@ public class BookingService {
         this.userRepository = userRepository;
     }
 
-    // --- USER BOOKING OPERATIONS ---
 
     public Optional<Booking> bookSeats(Long eventId, String userEmail, int seatsToBook) {
 
@@ -35,7 +34,7 @@ public class BookingService {
         Optional<User> userOpt = userRepository.findByEmail(userEmail);
 
         if (eventOpt.isEmpty() || userOpt.isEmpty()) {
-            return Optional.empty(); // Event or User not found
+            return Optional.empty();
         }
 
         Event event = eventOpt.get();
@@ -47,7 +46,7 @@ public class BookingService {
             throw new IllegalArgumentException("Requested seats (" + seatsToBook + ") are invalid or exceed available seats (" + availableSeats + ").");
         }
 
-        // 1. Create the new booking
+
         Booking booking = new Booking();
         booking.setEvent(event);
         booking.setUser(user);
@@ -55,14 +54,12 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // 2. Update the event seat count
+
         event.setBookedSeats(event.getBookedSeats() + seatsToBook);
         eventRepository.save(event);
 
         return Optional.of(savedBooking);
     }
-
-    // --- USER READ OPERATIONS ---
 
     public List<Booking> findMyBookings(String userEmail) {
         Optional<User> userOpt = userRepository.findByEmail(userEmail);
@@ -75,7 +72,6 @@ public class BookingService {
     }
 
     public List<Booking> findAllBookingsByUserId(Long userId) {
-        // The repository handles returning an empty list if the user exists but has no bookings.
         return bookingRepository.findByUserId(userId);
     }
 }

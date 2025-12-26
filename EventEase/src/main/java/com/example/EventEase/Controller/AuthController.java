@@ -37,7 +37,7 @@ public class AuthController {
         this.authenticationManager = authenticationManager;
     }
 
-    // --- Login DTO to prevent Null errors on Entity fields like 'name' ---
+
     @Data
     public static class LoginRequest {
         private String email;

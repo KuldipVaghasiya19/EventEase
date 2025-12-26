@@ -33,7 +33,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         System.out.println("Entered in cus.");
         List<GrantedAuthority> authorities = new ArrayList<>();
 
-        // 1. Try to find an Admin (ROLE_ADMIN)
         Optional<Admin> admin = adminRepository.findByEmail(email);
         if (admin.isPresent()) {
             Admin adm = admin.get();
@@ -41,7 +40,6 @@ public class CustomUserDetailsService implements UserDetailsService {
             return new org.springframework.security.core.userdetails.User(adm.getEmail(), adm.getPassword(), authorities);
         }
 
-        // 2. If no Admin is found, try to find a standard User (ROLE_USER)
         Optional<User> user = userRepository.findByEmail(email);
         if (user.isPresent()) {
             User usr = user.get();

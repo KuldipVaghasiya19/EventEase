@@ -27,7 +27,6 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // FIX 1: Centralize PasswordEncoder here. MUST DELETE/DISABLE PasswordConfig.java
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -57,7 +56,6 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-                // FIX 2: Enable Basic Auth. This is what calls your CustomUserDetailsService.
                 .httpBasic(Customizer.withDefaults())
 
                 .securityContext(context -> context
@@ -74,10 +72,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Event public read access (Unprotected)
                         .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/{id}").permitAll()
 
-                        // Authorization Rules (These are the protected endpoints)
                         .requestMatchers("/api/events/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 

@@ -35,7 +35,6 @@ public class BookingController {
     }
 
 
-    // Helper to get authenticated user's email (principal)
     private String getCurrentUserEmail() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getName();
@@ -54,7 +53,6 @@ public class BookingController {
         User user = userOpt.get();
         Event event = eventOpt.get();
 
-        // --- DUPLICATE CHECK ---
         if (bookingRepository.existsByUserAndEvent(user, event)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("You have already booked a ticket for this event.");
@@ -85,30 +83,25 @@ public class BookingController {
             List<Booking> bookings = bookingService.findMyBookings(userEmail);
             return ResponseEntity.ok(bookings);
         } catch (Exception e) {
-            // If user is not found, although authentication should prevent this, returning 404 is appropriate.
             return ResponseEntity.status(404).build();
         }
     }
 
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<Booking>> getBookingsByUserId(@PathVariable Long userId) {
-        // Authorization is handled by SecurityConfig (ROLE_ADMIN is required for /admin/**)
 
         List<Booking> bookings = bookingService.findAllBookingsByUserId(userId);
 
         if (bookings.isEmpty()) {
-            // Returning 200 OK with an empty list is generally preferred over 404
-            // when the user exists but has no results.
+
             return ResponseEntity.ok(bookings);
         }
         return ResponseEntity.ok(bookings);
     }
 
-    // Add this method to your existing BookingController.java
 
     @DeleteMapping("/cancel/{bookingId}")
     public ResponseEntity<?> cancelBooking(@PathVariable Long bookingId) {
-        // 1. Get current authenticated user's email
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> currentUserOpt = userService.findByEmail(email);
 
@@ -118,37 +111,33 @@ public class BookingController {
 
         User currentUser = currentUserOpt.get();
 
-        // 2. Find booking and validate ownership
         return bookingRepository.findById(bookingId).map(booking -> {
 
-            // 3. Compare User IDs to avoid "Access Denied"
-            // Ensure you use .getId() and .equals()
+
             if (!booking.getUser().getId().equals(currentUser.getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("Access Denied: You do not own this booking");
             }
 
-            // 4. Update Event Seat Count
+
             Event event = booking.getEvent();
             if (event != null) {
                 event.setBookedSeats(Math.max(0, event.getBookedSeats() - 1));
                 eventRepository.save(event);
             }
 
-            // 5. Delete the booking
+
             bookingRepository.delete(booking);
             return ResponseEntity.ok("Booking cancelled successfully");
 
         }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body("Booking not found"));
     }
-    // src/main/java/com/example/EventEase/Controller/BookingController.java
 
     @GetMapping("/admin/registrations")
     public ResponseEntity<List<Booking>> getAdminEventRegistrations(
             @RequestParam(required = false) Long eventId) {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        // If eventId is provided, only get bookings for that event
         if (eventId != null) {
             Optional<Event> eventOpt = eventRepository.findById(eventId);
             if (eventOpt.isPresent() && eventOpt.get().getAdmin().getEmail().equals(email)) {
@@ -157,7 +146,6 @@ public class BookingController {
             return ResponseEntity.ok(new ArrayList<>());
         }
 
-        // Otherwise, get all bookings for all events of this admin
         List<Event> adminEvents = eventRepository.findByAdminEmail(email);
         List<Booking> allRegistrations = new ArrayList<>();
         for (Event event : adminEvents) {

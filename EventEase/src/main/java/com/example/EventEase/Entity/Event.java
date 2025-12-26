@@ -22,7 +22,6 @@ public class Event {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seq2")
-    // This one line (the @SequenceGenerator) makes your IDs look professional (e.g., 102541, 102542)
     @SequenceGenerator(name = "booking_seq2", sequenceName = "event_id_seq", initialValue = 16205, allocationSize = 6)
     private Long id;
 
@@ -47,17 +46,14 @@ public class Event {
     private String venue;
 
     @NonNull
-    // FIX: Changed 'int' to 'Integer'
     private Integer totalSeats;
 
-    // FIX: Changed 'int' to 'Integer'. Will be set to 0 in service/constructor.
     private Integer bookedSeats = 0;
 
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Booking> bookings;
 
-    // In Event.java:
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id", nullable = false)
     @JsonIgnoreProperties("createdEvents")

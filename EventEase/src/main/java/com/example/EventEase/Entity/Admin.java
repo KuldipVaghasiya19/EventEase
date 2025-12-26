@@ -18,9 +18,8 @@ public class Admin {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "booking_seq")
-    // This one line (the @SequenceGenerator) makes your IDs look professional (e.g., 102541, 102542)
     @SequenceGenerator(name = "booking_seq", sequenceName = "admin_id_seq", initialValue = 102541, allocationSize = 5)
-    private Long id;// Changed from String id (MongoDB) to Long id (JPA)
+    private Long id;
 
     @NonNull
     private String name;
@@ -37,7 +36,7 @@ public class Admin {
     private String contact;
 
     @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnore // <--- FIX APPLIED
+    @JsonIgnore
     private List<Event> createdEvents;
 
     private final String role = "ADMIN";
